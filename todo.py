@@ -14,9 +14,16 @@ from enum import Enum
 #     EMPTY = 3
 
 class TodoManager:
-    def __init__(self) -> None:
-        self.TodoLists: Dict[str,List[str]] = {'Main':[]}
-        self.DoneLists: Dict[str,List[str]] = {'Main':[]}
+    def __init__(self, todo_path: Path) -> None:
+        self.FilePath:Path = todo_path
+        self.TodoLists: Dict[str,List[str]] = {}
+        self.DoneLists: Dict[str,List[str]] = {}
+    
+    def __parseFile(self)->None:
+        pass
+    
+    def __writeFile(self)->None:
+        pass
     
     def __addTask(self, list_name: str, task: str)->None:
         self.TodoLists[list_name].append(task)
@@ -78,6 +85,52 @@ class TodoManager:
             print(f"Abort by user.")
         return
 
+    def __orderList(self, list_name:str) -> None:
+        pass
+        
+    def __orderTask(self, list_name:str, old_task_number: int, new_task_number: int)-> None:
+        pass
+        
+    def doneList(self, list_name:str)->None:
+        self.__orderList(list_name)
+        pass
+    
+    def restoreList(self, list_name:str)->None:
+        pass
+    
     def doneTask(self, list_name:str, task_number: int)->None:
         pass
         
+    def restoreTask(self, list_name:str, task_number: int) -> None:
+        pass
+        
+    def clearDoneList(self)-> None:
+        print("Are you sure to delete all the done tasks and done lists? (y/N)")
+        opt = input()
+        if opt.lower() == 'y':
+            self.DoneLists={}
+            print("Cleared.")
+        else:
+            print("Abort. Done list not modified.")
+            return
+            
+    def viewTodo(self)->None:
+        pass
+    
+    def viewTodoList(self, list_name: str)->None:
+        pass
+    
+    def viewDone(self)->None:
+        pass
+    
+    def viewDoneList(self, list_name: str)->None:
+        pass
+    
+        
+# ----------------------
+
+def main():
+    pass
+    
+if __name__=="__main__":
+   main() 
