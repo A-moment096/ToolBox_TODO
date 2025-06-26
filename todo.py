@@ -24,6 +24,8 @@ class TodoManager:
             
             current_section : Dict[str, List[str]] = {}
             for l in file_lines:
+                if not l:
+                    continue
                 if l.startswith('# '):
                     section_name = l[2:].strip()
                     if section_name == 'Todo':
@@ -149,8 +151,14 @@ class TodoManager:
     
         
 # ----------------------
+DEBUG:bool = True
+# DEBUG:bool = False
 
 def main():
+    if DEBUG is not None:
+        HOME = Path.home()
+        TODO_FILE = HOME / 'TODO.md'
+        todo_manager:TodoManager = TodoManager(TODO_FILE)
     pass
     
 if __name__=="__main__":
