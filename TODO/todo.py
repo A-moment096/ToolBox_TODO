@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 from pathlib import Path
-from typing import Dict, Optional, List
+from typing import Dict, List, TypeAlias
 import re
 from rich import print as rprint
 from rich.style import Style
@@ -9,7 +9,7 @@ import argparse
 import shutil
 import json
 
-type Section = Dict[str, List[str]]
+Section: TypeAlias = Dict[str, List[str]]
 
 
 def print(*args, **kwargs):
@@ -20,7 +20,7 @@ def print(*args, **kwargs):
     """Custom print that styles #-lines and numbered lines using rich."""
     original_sep = kwargs.get("sep", " ")
     original_text: str = original_sep.join(str(arg) for arg in args)
-    
+
     lines = original_text.split("\n")
     for line in lines:
         if line.startswith("# "):
@@ -31,6 +31,7 @@ def print(*args, **kwargs):
             rprint(f"[{NUMBERED_STYLE}]{line}[/]")
         else:
             rprint(line)  # Fallback to plain print
+
 
 class TodoManager:
     def __init__(self, todo_path: Path) -> None:
@@ -64,7 +65,10 @@ class TodoManager:
                 else:
                     line_match = re.match(r"^\d+\.\s(.*)$", l.strip())
                     # plain text line will be treated as a task
-                    task: str = line_match.group(1) if line_match else l.strip()
+                    task: str = line_match.group(1) if line_match else l
+                    if list_name not in current_section:
+                        print(f"Warning: Task '{task}' found without a list.")
+                        continue
                     current_section[list_name].append(task)
 
     def writeFile(self) -> None:
@@ -96,7 +100,7 @@ class TodoManager:
             print(f"No matching list found.")
             return []
 
-    def __checkListName(self, list_name: str, no_create:bool=False) -> str:
+    def __checkListName(self, list_name: str, no_create: bool = False) -> str:
         if list_name in self.TodoLists:
             return list_name
         else:
@@ -105,7 +109,11 @@ class TodoManager:
             # Handle user input
             if matched_name:
                 try:
-                    selection: int = int(input(f"Use 0 for a new list {list_name}, simple <Enter> to abort\nYour selection: ").strip())
+                    selection: int = int(
+                        input(
+                            f"Use 0 for a new list {list_name}, simple <Enter> to abort\nYour selection: "
+                        ).strip()
+                    )
                     assert selection is not None
                     if selection == 0 and not no_create:
                         return list_name
@@ -113,8 +121,9 @@ class TodoManager:
                         return matched_name[int(selection - 1)]
                     else:
                         print("Invalid input: out of range")
-                        exit(1)
+                        return ""
                 except:
+                    print("Invalid input, nothing changed.")
                     return ""
             elif not no_create:
                 opt: str = input(f"Create a new list named as {list_name}? (y/N)")
@@ -163,8 +172,10 @@ class TodoManager:
                     f"Moved task '{task}' from position {old_task_number} to {new_task_number} in list '{list_name}'."
                 )
         return
-    
-    def __moveTask(self, source: Section, target: Section, list_name: str, task_number: int) -> None:
+
+    def __moveTask(
+        self, source: Section, target: Section, list_name: str, task_number: int
+    ) -> None:
         if list_name not in source:
             print(f"No such list named as {list_name}.")
             return
@@ -176,7 +187,7 @@ class TodoManager:
             target[list_name].append(task)
         else:
             target[list_name] = [task]
-    
+
     def __moveList(self, source: Section, target: Section, list_name: str) -> None:
         if list_name not in source:
             print(f"No such list named as {list_name}.")
@@ -190,7 +201,7 @@ class TodoManager:
 
     def restoreList(self, list_name: str) -> None:
         self.__moveList(self.DoneLists, self.TodoLists, list_name)
-        print(f"Resotre list '{list_name}' to Todo section.")
+        print(f"Restore list '{list_name}' to Todo section.")
 
     def doneTask(self, list_name: str, task_number: int) -> None:
         self.__moveTask(self.TodoLists, self.DoneLists, list_name, task_number)
@@ -205,7 +216,9 @@ class TodoManager:
             self.DoneLists = {}
             print("Cleared all done tasks and lists.")
         else:
-            opt = input("Are you sure to delete all the done tasks and done lists? (y/N): ")
+            opt = input(
+                "Are you sure to delete all the done tasks and done lists? (y/N): "
+            )
             if opt.lower() == "y":
                 self.DoneLists = {}
                 print("Cleared.")
@@ -219,17 +232,17 @@ class TodoManager:
             for i, task in enumerate(tasks, start=1):
                 print(f"{i}. {task}")
         return
-    
+
     def __viewList(self, section: Section, list_name: str) -> None:
-        list_name = self.__checkListName(list_name,no_create=True)
+        list_name = self.__checkListName(list_name, no_create=True)
         print(f"\n## {list_name}\n")
         for i, task in enumerate(section[list_name], start=1):
             print(f"{i}. {task}")
         return
 
-# ----------------------------------
-# Visualize the todo lists and tasks
-# ----------------------------------
+    # ----------------------------------
+    # Visualize the todo lists and tasks
+    # ----------------------------------
     def viewTodo(self) -> None:
         print("# Todo")
         self.__viewSection(self.TodoLists)
@@ -243,7 +256,7 @@ class TodoManager:
 
     def viewDoneList(self, list_name: str) -> None:
         self.__viewList(self.DoneLists, list_name)
-        
+
     def viewAll(self) -> None:
         self.viewTodo()
         print("")
@@ -268,77 +281,95 @@ Examples:
   %(prog)s restore "My List" 2            # Restore task 2 from done
   %(prog)s order "My List" 1 3            # Move task from position 1 to 3
   %(prog)s clear-done                     # Clear all done items
-        """
+        """,
     )
-    
+
     # Global options
     parser.add_argument(
-        "--file", "-f",
+        "--file",
+        "-f",
         type=Path,
-        help="Path to the todo file (default: ~/TODO.md or ./TODO.md in debug mode)"
+        help="Path to the todo file (default: ~/TODO.md or ./TODO.md in debug mode)",
     )
     parser.add_argument(
         "--debug",
         action="store_true",
-        help="Use current directory for todo file instead of home directory"
+        help="Use current directory for todo file instead of home directory",
     )
-    
+
     # Create subparsers for different commands
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
-    
+
     # View command
     view_parser = subparsers.add_parser("view", help="View todo lists and tasks")
     view_group = view_parser.add_mutually_exclusive_group()
     view_group.add_argument("--todo", action="store_true", help="Show only todo items")
     view_group.add_argument("--done", action="store_true", help="Show only done items")
     view_group.add_argument("--list", "-l", help="Show specific list")
-    
+
     # Add task command
     add_parser = subparsers.add_parser("add", help="Add a new task to a list")
     add_parser.add_argument("list_name", help="Name of the list")
     add_parser.add_argument("task", help="Task description")
-    
-    # Add list command  
+
+    # Add list command
     add_list_parser = subparsers.add_parser("add-list", help="Add a new list")
     add_list_parser.add_argument("list_name", help="Name of the new list")
-    
+
     # Done task command
     done_parser = subparsers.add_parser("done", help="Mark a task as done")
     done_parser.add_argument("list_name", help="Name of the list")
-    done_parser.add_argument("task_number", type=int, help="Task number to mark as done")
-    
+    done_parser.add_argument(
+        "task_number", type=int, help="Task number to mark as done"
+    )
+
     # Done list command
-    done_list_parser = subparsers.add_parser("done-list", help="Mark entire list as done")
+    done_list_parser = subparsers.add_parser(
+        "done-list", help="Mark entire list as done"
+    )
     done_list_parser.add_argument("list_name", help="Name of the list to mark as done")
-    
+
     # Restore task command
-    restore_parser = subparsers.add_parser("restore", help="Restore a done task back to todo")
+    restore_parser = subparsers.add_parser(
+        "restore", help="Restore a done task back to todo"
+    )
     restore_parser.add_argument("list_name", help="Name of the list")
     restore_parser.add_argument("task_number", type=int, help="Task number to restore")
-    
+
     # Restore list command
-    restore_list_parser = subparsers.add_parser("restore-list", help="Restore entire done list back to todo")
+    restore_list_parser = subparsers.add_parser(
+        "restore-list", help="Restore entire done list back to todo"
+    )
     restore_list_parser.add_argument("list_name", help="Name of the list to restore")
-    
+
     # Order/reorder task command
     order_parser = subparsers.add_parser("order", help="Reorder tasks within a list")
     order_parser.add_argument("list_name", help="Name of the list")
-    order_parser.add_argument("old_position", type=int, help="Current position of the task")
-    order_parser.add_argument("new_position", type=int, help="New position for the task")
-    
+    order_parser.add_argument(
+        "old_position", type=int, help="Current position of the task"
+    )
+    order_parser.add_argument(
+        "new_position", type=int, help="New position for the task"
+    )
+
     # Clear done command
-    clear_parser = subparsers.add_parser("clear-done", help="Clear all done tasks and lists")
-    clear_parser.add_argument("--force", "-f", action="store_true", help="Force clear without confirmation")
-    
+    clear_parser = subparsers.add_parser(
+        "clear-done", help="Clear all done tasks and lists"
+    )
+    clear_parser.add_argument(
+        "--force", "-f", action="store_true", help="Force clear without confirmation"
+    )
+
     # Save command
     save_parser = subparsers.add_parser("save", help="Save current state to file")
-    
+
     return parser
+
 
 def main():
     parser = create_parser()
     args = parser.parse_args()
-    
+
     # Determine the todo file path
     if args.file:
         todo_file = args.file
@@ -346,7 +377,7 @@ def main():
         todo_file = Path(__file__).resolve().parent / "TODO.md"
     else:
         todo_file = Path.home() / "TODO.md"
-    
+
     # Create TodoManager instance
     try:
         tdmgr = TodoManager(todo_file)
@@ -355,10 +386,10 @@ def main():
         print("Creating new todo file...")
         todo_file.touch()
         # Create an empty todo file with basic structure
-        with open(todo_file, 'w') as f:
+        with open(todo_file, "w") as f:
             f.write("# Todo\n\n# Done\n")
         tdmgr = TodoManager(todo_file)
-    
+
     # Handle different commands
     if not args.command or args.command == "view":
         if args.todo:
@@ -376,43 +407,44 @@ def main():
                 return
         else:
             tdmgr.viewAll()
-    
+
     elif args.command == "add":
         tdmgr.addTask(args.list_name, args.task)
         tdmgr.writeFile()
-    
+
     elif args.command == "add-list":
         tdmgr.addList(args.list_name)
         tdmgr.writeFile()
-    
+
     elif args.command == "done":
         tdmgr.doneTask(args.list_name, args.task_number)
         tdmgr.writeFile()
-    
+
     elif args.command == "done-list":
         tdmgr.doneList(args.list_name)
         tdmgr.writeFile()
-    
+
     elif args.command == "restore":
         tdmgr.restoreTask(args.list_name, args.task_number)
         tdmgr.writeFile()
-    
+
     elif args.command == "restore-list":
         tdmgr.restoreList(args.list_name)
         tdmgr.writeFile()
-    
+
     elif args.command == "order":
         tdmgr.orderTask(args.list_name, args.old_position, args.new_position)
         tdmgr.writeFile()
-    
+
     elif args.command == "clear-done":
-        force = getattr(args, 'force', False)
+        force = getattr(args, "force", False)
         tdmgr.clearDoneList(force)
         tdmgr.writeFile()
-    
+
     elif args.command == "save":
         tdmgr.writeFile()
         print("Todo file saved.")
+
 
 if __name__ == "__main__":
     main()
