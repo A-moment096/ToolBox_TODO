@@ -281,6 +281,7 @@ Examples:
   %(prog)s restore "My List" 2            # Restore task 2 from done
   %(prog)s order "My List" 1 3            # Move task from position 1 to 3
   %(prog)s clear-done                     # Clear all done items
+
         """,
     )
 
@@ -354,7 +355,7 @@ Examples:
 
     # Clear done command
     clear_parser = subparsers.add_parser(
-        "clear-done", help="Clear all done tasks and lists"
+        "clear", help="Clear all done tasks and lists"
     )
     clear_parser.add_argument(
         "--force", "-f", action="store_true", help="Force clear without confirmation"
@@ -391,7 +392,9 @@ def main():
         tdmgr = TodoManager(todo_file)
 
     # Handle different commands
-    if not args.command or args.command == "view":
+    if not args.command:
+        tdmgr.viewAll()
+    elif args.command == "view":
         if args.todo:
             tdmgr.viewTodo()
         elif args.done:
