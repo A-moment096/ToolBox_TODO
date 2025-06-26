@@ -7,19 +7,40 @@ import json
 from pathlib import Path
 from typing import Dict, Optional, List
 from enum import Enum
-
-# class CheckListResult(Enum):
-#     EXIST = 1
-#     CREATE = 2
-#     EMPTY = 3
+import re
 
 class TodoManager:
     def __init__(self, todo_path: Path) -> None:
         self.FilePath:Path = todo_path
         self.TodoLists: Dict[str,List[str]] = {}
         self.DoneLists: Dict[str,List[str]] = {}
+        self.__parseFile()
     
     def __parseFile(self)->None:
+        file_lines: List[str] = []
+        with open(self.FilePath, 'r') as f:
+            for line in f:
+                file_lines.append(line.strip())
+            
+            current_section : Dict[str, List[str]] = {}
+            for l in file_lines:
+                if l.startswith('# '):
+                    section_name = l[2:].strip()
+                    if section_name == 'Todo':
+                        current_section = self.TodoLists
+                    elif section_name == 'Done':
+                        current_section = self.DoneLists
+                    else:
+                        print(f"Unknown section: {section_name}")
+                        continue
+                elif l.startswith('## '):
+                    list_name = l[3:].strip()
+                    current_section[list_name] = []
+                else:
+                    line_match = re.match(r'^\d+\.\s(.*)$', l.strip())
+                    # plain text line will be treated as a task
+                    task : str= line_match.group(1) if line_match else l.strip()
+                    current_section[list_name].append(task)
         pass
     
     def __writeFile(self)->None:
