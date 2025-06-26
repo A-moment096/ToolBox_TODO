@@ -1,15 +1,36 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import argparse
-from subprocess import run
-import shutil
-import json
 from pathlib import Path
 from typing import Dict, Optional, List
-from enum import Enum
 import re
+from rich import print as rprint
+from rich.style import Style
+import argparse
+import shutil
+import json
 
 type Section = Dict[str, List[str]]
+
+
+def print(*args, **kwargs):
+    # Define your custom styles
+    HEADING1_STYLE = Style(color="yellow", bold=True)
+    HEADING2_STYLE = Style(color="green", bold=True)
+    NUMBERED_STYLE = Style(color="cyan")
+    """Custom print that styles #-lines and numbered lines using rich."""
+    original_sep = kwargs.get("sep", " ")
+    original_text: str = original_sep.join(str(arg) for arg in args)
+    
+    lines = original_text.split("\n")
+    for line in lines:
+        if line.startswith("# "):
+            rprint(f"[{HEADING1_STYLE}]{line}[/]")
+        elif line.startswith("## "):
+            rprint(f"[{HEADING2_STYLE}]{line}[/]")
+        elif line and line[0].isdigit():  # Check if first char is a digit
+            rprint(f"[{NUMBERED_STYLE}]{line}[/]")
+        else:
+            rprint(line)  # Fallback to plain print
 
 class TodoManager:
     def __init__(self, todo_path: Path) -> None:
@@ -45,7 +66,6 @@ class TodoManager:
                     # plain text line will be treated as a task
                     task: str = line_match.group(1) if line_match else l.strip()
                     current_section[list_name].append(task)
-        pass
 
     def writeFile(self) -> None:
         with open(self.FilePath, "w") as f:
@@ -59,7 +79,6 @@ class TodoManager:
                 f.write(f"## {list_name}\n")
                 for i, task in enumerate(tasks, start=1):
                     f.write(f"{i}. {task}\n")
-        pass
 
     # Check matching results.
     def __matchListName(self, list_name: str) -> List[str]:
@@ -77,21 +96,18 @@ class TodoManager:
             print(f"No matching list found.")
             return []
 
-    def __checkListName(self, list_name: str) -> str:
+    def __checkListName(self, list_name: str, no_create:bool=False) -> str:
         if list_name in self.TodoLists:
             return list_name
         else:
-            print(f"No such list named as {list_name}.")
+            print(f"No such list named as '{list_name}'.")
             matched_name: List[str] = self.__matchListName(list_name)
             # Handle user input
             if matched_name:
-                print(
-                    f"Which one is what you are refering to? Enter the number to select, or use '0' to create a new list named as {list_name}, or press Enter to abort."
-                )
                 try:
-                    selection: int = int(input("Your selection: ").strip())
+                    selection: int = int(input(f"Use 0 for a new list {list_name}, simple <Enter> to abort\nYour selection: ").strip())
                     assert selection is not None
-                    if selection == 0:
+                    if selection == 0 and not no_create:
                         return list_name
                     elif selection > 0 and selection <= len(matched_name):
                         return matched_name[int(selection - 1)]
@@ -100,13 +116,12 @@ class TodoManager:
                         exit(1)
                 except:
                     return ""
-            else:
+            elif not no_create:
                 opt: str = input(f"Create a new list named as {list_name}? (y/N)")
                 if opt.lower() == "y":
                     return list_name
                 else:
                     print(f"No list created. Nothing changed")
-
             return ""
 
     # Add a new list if it does not exist without asking.
@@ -122,7 +137,10 @@ class TodoManager:
         granted_list_name = self.__checkListName(list_name)
         if granted_list_name:
             self.addList(granted_list_name, True)
-            self.TodoLists[list_name].append(task)
+            self.TodoLists[granted_list_name].append(task)
+            print(f"Added task '{task}' to list '{granted_list_name}'.")
+        else:
+            print(f"Cancelled adding task, nothing changed")
         return
 
     def orderTask(
@@ -154,7 +172,10 @@ class TodoManager:
             print(f"Invalid task number {task_number} in list {list_name}.")
             return
         task: str = source[list_name].pop(task_number - 1)
-        target[list_name].append(task)
+        if list_name in target:
+            target[list_name].append(task)
+        else:
+            target[list_name] = [task]
     
     def __moveList(self, source: Section, target: Section, list_name: str) -> None:
         if list_name not in source:
@@ -166,22 +187,18 @@ class TodoManager:
     def doneList(self, list_name: str) -> None:
         self.__moveList(self.TodoLists, self.DoneLists, list_name)
         print(f"Done list '{list_name}'")
-        pass
 
     def restoreList(self, list_name: str) -> None:
         self.__moveList(self.DoneLists, self.TodoLists, list_name)
         print(f"Resotre list '{list_name}' to Todo section.")
-        pass
 
     def doneTask(self, list_name: str, task_number: int) -> None:
         self.__moveTask(self.TodoLists, self.DoneLists, list_name, task_number)
         print(f"Done task {task_number} in list '{list_name}'.")
-        pass
 
     def restoreTask(self, list_name: str, task_number: int) -> None:
         self.__moveTask(self.DoneLists, self.TodoLists, list_name, task_number)
         print(f"Restored task {task_number} in list '{list_name}' to Todo section.")
-        pass
 
     def clearDoneList(self) -> None:
         opt = input("Are you sure to delete all the done tasks and done lists? (y/N): ")
@@ -192,36 +209,60 @@ class TodoManager:
             print("Abort. Done list not modified.")
         return
 
+    def __viewSection(self, section: Section) -> None:
+        for list_name, tasks in section.items():
+            print(f"\n## {list_name}\n")
+            for i, task in enumerate(tasks, start=1):
+                print(f"{i}. {task}")
+        return
+    
+    def __viewList(self, section: Section, list_name: str) -> None:
+        list_name = self.__checkListName(list_name,no_create=True)
+        print(f"\n## {list_name}\n")
+        for i, task in enumerate(section[list_name], start=1):
+            print(f"{i}. {task}")
+        return
+
+# ----------------------------------
+# Visualize the todo lists and tasks
+# ----------------------------------
     def viewTodo(self) -> None:
-        pass
+        print("# Todo")
+        self.__viewSection(self.TodoLists)
 
     def viewTodoList(self, list_name: str) -> None:
-        pass
+        self.__viewList(self.TodoLists, list_name)
 
     def viewDone(self) -> None:
-        pass
+        print("# Done")
+        self.__viewSection(self.DoneLists)
 
     def viewDoneList(self, list_name: str) -> None:
-        pass
+        self.__viewList(self.DoneLists, list_name)
+        
+    def viewAll(self) -> None:
+        self.viewTodo()
+        print("")
+        self.viewDone()
 
 
 # ----------------------
-DEBUG: bool = True
-# DEBUG:bool = False
-
-
 def main():
+    DEBUG: bool = True
+    # DEBUG:bool = False
     if DEBUG:
+        HOME = Path(__file__).resolve().parent
+    else:
         HOME = Path.home()
-        TODO_FILE = HOME / "TODO.md"
+
+    TODO_FILE = HOME / "TODO.md"
+    if DEBUG:
         tdmgr: TodoManager = TodoManager(TODO_FILE)
+        tdmgr.viewAll()
         tdmgr.addList("Test List")
-        tdmgr.addTask("Test List", "This is a test task.")
-        tdmgr.addTask("another list", "another task for testing auto list adding")
-
-        # tdmgr.writeFile()
-    pass
-
+        tdmgr.addTask("Test List", "This is a test task")
+        print("\n------\n")
+        tdmgr.viewAll()
 
 if __name__ == "__main__":
     main()
