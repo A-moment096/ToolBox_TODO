@@ -7,10 +7,9 @@ from rich import print as rprint
 from rich.style import Style
 import argparse
 import shutil
-import json
+import json, yaml, toml
 
 Section: TypeAlias = Dict[str, List[str]]
-
 
 def print(*args, **kwargs):
     # Define your custom styles
@@ -34,15 +33,19 @@ def print(*args, **kwargs):
 
 
 class TodoManager:
-    def __init__(self, todo_path: Path) -> None:
-        self.FilePath: Path = todo_path
-        self.TodoLists: Section = {}
-        self.DoneLists: Section = {}
+    def __init__(self, todo_path: Path, config_path: Path = "") -> None:
+        self.__FilePath: Path = todo_path
+        self.__ConfigPath: Path = config_path
+        self.__TodoLists: Section = {}
+        self.__DoneLists: Section = {}
+        self.__Viewer:str = ""
+        self.__Editor:str = ""
         self.__parseFile()
+        self.__loadConfig()
 
     def __parseFile(self) -> None:
         file_lines: List[str] = []
-        with open(self.FilePath, "r") as f:
+        with open(self.__FilePath, "r") as f:
             for line in f:
                 file_lines.append(line.strip())
 
@@ -53,9 +56,9 @@ class TodoManager:
                 if l.startswith("# "):
                     section_name = l[2:].strip()
                     if section_name == "Todo":
-                        current_section = self.TodoLists
+                        current_section = self.__TodoLists
                     elif section_name == "Done":
-                        current_section = self.DoneLists
+                        current_section = self.__DoneLists
                     else:
                         print(f"Unknown section: {section_name}")
                         continue
@@ -70,16 +73,36 @@ class TodoManager:
                         print(f"Warning: Task '{task}' found without a list.")
                         continue
                     current_section[list_name].append(task)
+    
+    # TODO Implementation needed
+    def __loadConfig(self)->None:
+        with open(self.__ConfigPath, "r") as f:
+            json.load(f)
+            pass
+        pass
+    
+    # TODO Implementation needed
+    def __saveConfig(self)->None:
+        config_type = self.__ConfigPath.suffix
+        with open(self.__ConfigPath, "w") as f:
+            if config_type == ".json":
+                pass
+            elif config_type == ".yml" or config_type == ".yaml":
+                pass
+            elif config_type == ".toml":
+                pass
+            pass
+        pass
 
     def writeFile(self) -> None:
-        with open(self.FilePath, "w") as f:
+        with open(self.__FilePath, "w") as f:
             f.write("# Todo\n")
-            for list_name, tasks in self.TodoLists.items():
+            for list_name, tasks in self.__TodoLists.items():
                 f.write(f"## {list_name}\n")
                 for i, task in enumerate(tasks, start=1):
                     f.write(f"{i}. {task}\n")
             f.write("\n# Done\n")
-            for list_name, tasks in self.DoneLists.items():
+            for list_name, tasks in self.__DoneLists.items():
                 f.write(f"## {list_name}\n")
                 for i, task in enumerate(tasks, start=1):
                     f.write(f"{i}. {task}\n")
@@ -87,7 +110,7 @@ class TodoManager:
     # Check matching results.
     def __matchListName(self, list_name: str) -> List[str]:
         matched_name: List[str] = []
-        for exist_list in self.TodoLists:
+        for exist_list in self.__TodoLists:
             if list_name in exist_list:
                 matched_name.append(exist_list)
         if matched_name:
@@ -101,7 +124,7 @@ class TodoManager:
             return []
 
     def __checkListName(self, list_name: str, no_create: bool = False) -> str:
-        if list_name in self.TodoLists:
+        if list_name in self.__TodoLists:
             return list_name
         else:
             print(f"No such list named as '{list_name}'.")
@@ -135,18 +158,18 @@ class TodoManager:
 
     # Add a new list if it does not exist without asking.
     def addList(self, list_name: str, quiet: bool = False) -> None:
-        if list_name in self.TodoLists:
+        if list_name in self.__TodoLists:
             if not quiet:
                 print(f"List '{list_name}' already exists. No new list created.")
             return
         else:
-            self.TodoLists[list_name] = []
+            self.__TodoLists[list_name] = []
 
     def addTask(self, list_name: str, task: str) -> None:
         granted_list_name = self.__checkListName(list_name)
         if granted_list_name:
             self.addList(granted_list_name, True)
-            self.TodoLists[granted_list_name].append(task)
+            self.__TodoLists[granted_list_name].append(task)
             print(f"Added task '{task}' to list '{granted_list_name}'.")
         else:
             print(f"Cancelled adding task, nothing changed")
@@ -157,17 +180,17 @@ class TodoManager:
     ) -> None:
         list_name = self.__checkListName(list_name)
         if list_name:
-            if old_task_number < 1 or old_task_number > len(self.TodoLists[list_name]):
+            if old_task_number < 1 or old_task_number > len(self.__TodoLists[list_name]):
                 print(f"Invalid task number {old_task_number} in list {list_name}.")
                 return
             elif new_task_number < 1 or new_task_number > len(
-                self.TodoLists[list_name]
+                self.__TodoLists[list_name]
             ):
                 print(f"Invalid new task number {new_task_number} in list {list_name}.")
                 return
             else:
-                task: str = self.TodoLists[list_name].pop(old_task_number - 1)
-                self.TodoLists[list_name].insert(new_task_number - 1, task)
+                task: str = self.__TodoLists[list_name].pop(old_task_number - 1)
+                self.__TodoLists[list_name].insert(new_task_number - 1, task)
                 print(
                     f"Moved task '{task}' from position {old_task_number} to {new_task_number} in list '{list_name}'."
                 )
@@ -196,31 +219,31 @@ class TodoManager:
 
     # Not implemented yet
     def doneList(self, list_name: str) -> None:
-        self.__moveList(self.TodoLists, self.DoneLists, list_name)
+        self.__moveList(self.__TodoLists, self.__DoneLists, list_name)
         print(f"Done list '{list_name}'")
 
     def restoreList(self, list_name: str) -> None:
-        self.__moveList(self.DoneLists, self.TodoLists, list_name)
+        self.__moveList(self.__DoneLists, self.__TodoLists, list_name)
         print(f"Restore list '{list_name}' to Todo section.")
 
     def doneTask(self, list_name: str, task_number: int) -> None:
-        self.__moveTask(self.TodoLists, self.DoneLists, list_name, task_number)
+        self.__moveTask(self.__TodoLists, self.__DoneLists, list_name, task_number)
         print(f"Done task {task_number} in list '{list_name}'.")
 
     def restoreTask(self, list_name: str, task_number: int) -> None:
-        self.__moveTask(self.DoneLists, self.TodoLists, list_name, task_number)
+        self.__moveTask(self.__DoneLists, self.__TodoLists, list_name, task_number)
         print(f"Restored task {task_number} in list '{list_name}' to Todo section.")
 
     def clearDoneList(self, force: bool = False) -> None:
         if force:
-            self.DoneLists = {}
+            self.__DoneLists = {}
             print("Cleared all done tasks and lists.")
         else:
             opt = input(
                 "Are you sure to delete all the done tasks and done lists? (y/N): "
             )
             if opt.lower() == "y":
-                self.DoneLists = {}
+                self.__DoneLists = {}
                 print("Cleared.")
             else:
                 print("Abort. Done list not modified.")
@@ -245,17 +268,17 @@ class TodoManager:
     # ----------------------------------
     def viewTodo(self) -> None:
         print("# Todo")
-        self.__viewSection(self.TodoLists)
+        self.__viewSection(self.__TodoLists)
 
     def viewTodoList(self, list_name: str) -> None:
-        self.__viewList(self.TodoLists, list_name)
+        self.__viewList(self.__TodoLists, list_name)
 
     def viewDone(self) -> None:
         print("# Done")
-        self.__viewSection(self.DoneLists)
+        self.__viewSection(self.__DoneLists)
 
     def viewDoneList(self, list_name: str) -> None:
-        self.__viewList(self.DoneLists, list_name)
+        self.__viewList(self.__DoneLists, list_name)
 
     def viewAll(self) -> None:
         self.viewTodo()
@@ -363,6 +386,11 @@ Examples:
 
     # Save command
     save_parser = subparsers.add_parser("save", help="Save current state to file")
+    
+    config_parser = subparsers.add_parser("config", help="Config this small tool")
+    config_parser.add_argument("editor", type=str, help="Config default editor")
+    config_parser.add_argument("file", type=str, help="Config default path of 'TODO.md'")
+    config_parser.add_argument("printer",type=str, help="Config default printer of todo-list")
 
     return parser
 
@@ -393,7 +421,7 @@ def main():
 
     # Handle different commands
     if not args.command:
-        tdmgr.viewAll()
+        tdmgr.viewTodo()
     elif args.command == "view":
         if args.todo:
             tdmgr.viewTodo()
@@ -401,9 +429,9 @@ def main():
             tdmgr.viewDone()
         elif args.list:
             # Try to find the list in both todo and done sections
-            if args.list in tdmgr.TodoLists:
+            if args.list in tdmgr.__TodoLists:
                 tdmgr.viewTodoList(args.list)
-            elif args.list in tdmgr.DoneLists:
+            elif args.list in tdmgr.__DoneLists:
                 tdmgr.viewDoneList(args.list)
             else:
                 print(f"List '{args.list}' not found")
