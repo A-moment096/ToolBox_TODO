@@ -31,6 +31,18 @@ def print(*args, **kwargs):
         else:
             rprint(line)  # Fallback to plain print
 
+def selectOption(prompt: str, default: bool = True) -> bool:
+    """Prompt the user for a yes/no answer."""
+    while True:
+        response = input(f"{prompt} [{'Y/n' if default else 'y/N'}]: ").strip().lower()
+        if response == '':
+            return default
+        elif response in ('y', 'yes'):
+            return True
+        elif response in ('n', 'no'):
+            return False
+        else:
+            print("Invalid input, please enter 'y' or 'n'.")
 
 class TodoManager:
     def __init__(self, todo_path: Path, config_path: Path = "") -> None:
@@ -40,8 +52,28 @@ class TodoManager:
         self.__DoneLists: Section = {}
         self.__Viewer:str = ""
         self.__Editor:str = ""
-        self.__parseFile()
-        self.__loadConfig()
+
+        try:
+            self.__parseFile()
+        except:
+            print(f"Todo file not found at {self.__FilePath}.")
+            if selectOption("Create a new todo file?"):
+                # Create a new todo file with basic structure
+                if not self.__FilePath.parent.exists():
+                    print("Creating new todo file...")
+                    self.__FilePath.parent.mkdir(parents=True, exist_ok=True)
+                    self.__FilePath.touch()
+                    with open(self.__FilePath, "w") as f:
+                        f.write("# Todo\n\n# Done\n")
+                    self.__parseFile()
+            else:
+                print("Exiting without creating a new todo file.")
+                return
+
+        try:
+            self.__loadConfig()
+        except:
+            return
 
     def __parseFile(self) -> None:
         file_lines: List[str] = []
@@ -149,8 +181,7 @@ class TodoManager:
                     print("Invalid input, nothing changed.")
                     return ""
             elif not no_create:
-                opt: str = input(f"Create a new list named as {list_name}? (y/N)")
-                if opt.lower() == "y":
+                if selectOption(f"Create a new list named as {list_name}?"):
                     return list_name
                 else:
                     print(f"No list created. Nothing changed")
@@ -239,10 +270,7 @@ class TodoManager:
             self.__DoneLists = {}
             print("Cleared all done tasks and lists.")
         else:
-            opt = input(
-                "Are you sure to delete all the done tasks and done lists? (y/N): "
-            )
-            if opt.lower() == "y":
+            if selectOption("Are you sure to delete all the done tasks and done lists?"):
                 self.__DoneLists = {}
                 print("Cleared.")
             else:
@@ -402,22 +430,13 @@ def main():
     # Determine the todo file path
     if args.file:
         todo_file = args.file
-    elif args.debug:
+    elif args.debug or __debug__:
         todo_file = Path(__file__).resolve().parent / "TODO.md"
     else:
         todo_file = Path.home() / "TODO.md"
-
-    # Create TodoManager instance
-    try:
-        tdmgr = TodoManager(todo_file)
-    except FileNotFoundError:
-        print(f"Todo file not found at {todo_file}")
-        print("Creating new todo file...")
-        todo_file.touch()
-        # Create an empty todo file with basic structure
-        with open(todo_file, "w") as f:
-            f.write("# Todo\n\n# Done\n")
-        tdmgr = TodoManager(todo_file)
+    
+    # Initialize TodoManager and Parse todo file 
+    tdmgr = TodoManager(todo_file)
 
     # Handle different commands
     if not args.command:
