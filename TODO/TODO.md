@@ -1,7 +1,7 @@
 # Todo
 ## Main List
-1. test task 1
-2. test 2
+1. test 2
+2. test task 1
 ## Another List
 1. a test
 2. another test

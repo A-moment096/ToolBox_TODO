@@ -45,7 +45,7 @@ def selectOption(prompt: str, default: bool = True) -> bool:
             print("Invalid input, please enter 'y' or 'n'.")
 
 class TodoManager:
-    def __init__(self, todo_path: Path, config_path: Path = "") -> None:
+    def __init__(self, todo_path: Path, config_path: Path = Path()) -> None:
         self.__FilePath: Path = todo_path
         self.__ConfigPath: Path = config_path
         self.__TodoLists: Section = {}
@@ -115,6 +115,7 @@ class TodoManager:
                     config_data = json.load(f)
                     self.__Viewer = config_data.get("viewer", "")
                     self.__Editor = config_data.get("editor", "")
+                    self.__FilePath = Path(config_data.get("file", self.__FilePath))
                 except json.JSONDecodeError as e:
                     print(f"Error loading JSON config: {e}")
                 pass
@@ -123,6 +124,7 @@ class TodoManager:
                     config_data = yaml.safe_load(f)
                     self.__Viewer = config_data.get("viewer", "")
                     self.__Editor = config_data.get("editor", "")
+                    self.__FilePath = Path(config_data.get("file", self.__FilePath))
                 except yaml.YAMLError as e:
                     print(f"Error loading YAML config: {e}")
                 pass
@@ -131,6 +133,7 @@ class TodoManager:
                     config_data = toml.load(f)
                     self.__Viewer = config_data.get("viewer", "")
                     self.__Editor = config_data.get("editor", "")
+                    self.__FilePath = Path(config_data.get("file", self.__FilePath))
                 except toml.TomlDecodeError as e:
                     print(f"Error loading TOML config: {e}")
                 pass
@@ -138,26 +141,44 @@ class TodoManager:
         pass
     
     # TODO Implementation needed
-    def __saveConfig(self)->None:
+    # def saveConfig(self)->None:
+    #     config_type = self.__ConfigPath.suffix
+    #     with open(self.__ConfigPath, "w") as f:
+    #         if config_type == ".json":
+    #             json.dump({
+    #                 "viewer": self.__Viewer,
+    #                 "editor": self.__Editor,
+    #                 "file": str(self.__FilePath)
+    #             }, f)
+    #         elif config_type == ".yml" or config_type == ".yaml":
+    #             yaml.dump({
+    #                 "viewer": self.__Viewer,
+    #                 "editor": self.__Editor,
+    #                 "file": str(self.__FilePath)
+    #             }, f)
+    #         elif config_type == ".toml":
+    #             toml.dump({
+    #                 "viewer": self.__Viewer,
+    #                 "editor": self.__Editor,
+    #                 "file": str(self.__FilePath)
+    #             }, f)
+    
+    def saveConfig(self, editor: str = "", file: str = "", viewer: str = "") -> None:
+        """Save the current configuration to the config file."""
+        config_data = {
+            "editor": editor if editor else self.__Editor,
+            "file": str(file) if file else str(self.__FilePath),
+            "viewer": viewer if viewer else self.__Viewer
+        }
         config_type = self.__ConfigPath.suffix
         with open(self.__ConfigPath, "w") as f:
             if config_type == ".json":
-                json.dump({
-                    "viewer": self.__Viewer,
-                    "editor": self.__Editor
-                }, f)
-            elif config_type == ".yml" or config_type == ".yaml":
-                yaml.dump({
-                    "viewer": self.__Viewer,
-                    "editor": self.__Editor
-                }, f)
+                json.dump(config_data, f, indent=4)
+            elif config_type in (".yml", ".yaml"):
+                yaml.dump(config_data, f, default_flow_style=False)
             elif config_type == ".toml":
-                toml.dump({
-                    "viewer": self.__Viewer,
-                    "editor": self.__Editor
-                }, f)
-            pass
-        pass
+                toml.dump(config_data, f)
+        print(f"Configuration saved to {self.__ConfigPath}")
 
     def writeFile(self) -> None:
         with open(self.__FilePath, "w") as f:
@@ -310,6 +331,22 @@ class TodoManager:
                 print("Abort. Done list not modified.")
         return
 
+    def editFile(self, editor:str = "")->None:
+        """Open the todo file in the configured editor."""
+        if not self.__Editor and not editor:
+            print("No editor configured. Please set an editor using --editor option.")
+            return
+        elif editor:
+            self.__Editor = editor
+        if shutil.which(self.__Editor) is None:
+            print(f"Editor '{self.__Editor}' not found in PATH.")
+            return
+        try:
+            import subprocess
+            subprocess.run([self.__Editor, str(self.__FilePath)], check=True)
+        except Exception as e:
+            print(f"Failed to open editor: {e}")
+
     def __viewSection(self, section: Section) -> None:
         for list_name, tasks in section.items():
             print(f"\n## {list_name}\n")
@@ -448,10 +485,21 @@ Examples:
     # Save command
     save_parser = subparsers.add_parser("save", help="Save current state to file")
     
+    # Config command
     config_parser = subparsers.add_parser("config", help="Config this small tool")
-    config_parser.add_argument("editor", type=str, help="Config default editor")
-    config_parser.add_argument("file", type=str, help="Config default path of 'TODO.md'")
-    config_parser.add_argument("printer",type=str, help="Config default printer of todo-list")
+    config_parser.add_argument("--editor", type=str, help="Config default editor")
+    config_parser.add_argument("--file", type=str, help="Config default path of 'TODO.md'")
+    config_parser.add_argument("--printer",type=str, help="Config default printer of todo-list")
+    
+    # Edit command
+    edit_parser = subparsers.add_parser("edit", help="Edit the todo file with the configured editor")
+    edit_parser.add_argument(
+        "--editor",
+        "-e",
+        type=str,
+        default="vim",
+        help="Editor to use for editing the todo file (default: vim)",
+    )
 
     return parser
 
@@ -468,8 +516,14 @@ def main():
     else:
         todo_file = Path.home() / "TODO.md"
     
+    config_file_path: Path
+    if __debug__:
+        config_file_path = Path(__file__).resolve().parent / "config.json"
+    else:
+        config_file_path = Path.home() / ".config/todo_config.json"
+        
     # Initialize TodoManager and Parse todo file 
-    tdmgr = TodoManager(todo_file)
+    tdmgr = TodoManager(todo_file,config_path=config_file_path)
 
     # Handle different commands
     if not args.command:
@@ -524,19 +578,16 @@ def main():
         tdmgr.clearDoneList(force)
         tdmgr.writeFile()
 
+    elif args.command == "edit":
+        tdmgr.editFile(args.editor)
+        return
+
     elif args.command == "save":
         tdmgr.writeFile()
         print("Todo file saved.")
         
     elif args.command == "config":
-        if args.editor:
-            tdmgr.__Editor = args.editor
-        if args.file:
-            tdmgr.__FilePath = Path(args.file)
-        if args.printer:
-            tdmgr.__Viewer = args.printer
-        tdmgr.__saveConfig()
-        print("Configuration saved.")
+        tdmgr.saveConfig(args.editor, args.file, args.printer)
 
 
 if __name__ == "__main__":
