@@ -108,8 +108,32 @@ class TodoManager:
     
     # TODO Implementation needed
     def __loadConfig(self)->None:
+        config_type = self.__ConfigPath.suffix
         with open(self.__ConfigPath, "r") as f:
-            json.load(f)
+            if config_type == ".json":
+                try:
+                    config_data = json.load(f)
+                    self.__Viewer = config_data.get("viewer", "")
+                    self.__Editor = config_data.get("editor", "")
+                except json.JSONDecodeError as e:
+                    print(f"Error loading JSON config: {e}")
+                pass
+            elif config_type == ".yml" or config_type == ".yaml":
+                try:
+                    config_data = yaml.safe_load(f)
+                    self.__Viewer = config_data.get("viewer", "")
+                    self.__Editor = config_data.get("editor", "")
+                except yaml.YAMLError as e:
+                    print(f"Error loading YAML config: {e}")
+                pass
+            elif config_type == ".toml":
+                try:
+                    config_data = toml.load(f)
+                    self.__Viewer = config_data.get("viewer", "")
+                    self.__Editor = config_data.get("editor", "")
+                except toml.TomlDecodeError as e:
+                    print(f"Error loading TOML config: {e}")
+                pass
             pass
         pass
     
@@ -118,11 +142,20 @@ class TodoManager:
         config_type = self.__ConfigPath.suffix
         with open(self.__ConfigPath, "w") as f:
             if config_type == ".json":
-                pass
+                json.dump({
+                    "viewer": self.__Viewer,
+                    "editor": self.__Editor
+                }, f)
             elif config_type == ".yml" or config_type == ".yaml":
-                pass
+                yaml.dump({
+                    "viewer": self.__Viewer,
+                    "editor": self.__Editor
+                }, f)
             elif config_type == ".toml":
-                pass
+                toml.dump({
+                    "viewer": self.__Viewer,
+                    "editor": self.__Editor
+                }, f)
             pass
         pass
 
@@ -494,6 +527,16 @@ def main():
     elif args.command == "save":
         tdmgr.writeFile()
         print("Todo file saved.")
+        
+    elif args.command == "config":
+        if args.editor:
+            tdmgr.__Editor = args.editor
+        if args.file:
+            tdmgr.__FilePath = Path(args.file)
+        if args.printer:
+            tdmgr.__Viewer = args.printer
+        tdmgr.__saveConfig()
+        print("Configuration saved.")
 
 
 if __name__ == "__main__":
