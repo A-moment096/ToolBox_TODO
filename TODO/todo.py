@@ -182,14 +182,14 @@ class TodoManager:
 
     def writeFile(self) -> None:
         with open(self.__FilePath, "w") as f:
-            f.write("# Todo\n")
+            f.write("# Todo\n\n")
             for list_name, tasks in self.__TodoLists.items():
-                f.write(f"## {list_name}\n")
+                f.write(f"## {list_name}\n\n")
                 for i, task in enumerate(tasks, start=1):
                     f.write(f"{i}. {task}\n")
-            f.write("\n# Done\n")
+            f.write("\n# Done\n\n")
             for list_name, tasks in self.__DoneLists.items():
-                f.write(f"## {list_name}\n")
+                f.write(f"## {list_name}\n\n")
                 for i, task in enumerate(tasks, start=1):
                     f.write(f"{i}. {task}\n")
 
@@ -347,41 +347,84 @@ class TodoManager:
         except Exception as e:
             print(f"Failed to open editor: {e}")
 
-    def __viewSection(self, section: Section) -> None:
+    
+    def __outputSection(self, section: Section) -> str:
+        output :str = ""
         for list_name, tasks in section.items():
-            print(f"\n## {list_name}\n")
+            output += f"\n## {list_name}\n"
             for i, task in enumerate(tasks, start=1):
-                print(f"{i}. {task}")
-        return
+                output += f"{i}. {task}\n"
+        return output 
 
-    def __viewList(self, section: Section, list_name: str) -> None:
+    def __outputList(self, section: Section, list_name: str) -> str:
         list_name = self.__checkListName(list_name, no_create=True)
-        print(f"\n## {list_name}\n")
-        for i, task in enumerate(section[list_name], start=1):
-            print(f"{i}. {task}")
-        return
-
+        output: str = f"\n## {list_name}\n"
+        if list_name in section:
+            for i, task in enumerate(section[list_name], start=1):
+                output += f"{i}. {task}\n"
+        else:
+            output += "No tasks found in this list.\n"
+        return output
+    
+    def __viewOutput(self, output: str) -> None:
+        """Output the content to the viewer or console."""
+        if self.__Viewer:
+            command_list: List[str] = self.__Viewer.split()
+            if self.__Viewer == "bat" or self.__Viewer == "batcat":
+                # Use bat / batcat for syntax highlighting
+                command_list.append("--language=markdown")
+            elif self.__Viewer == "less":
+                # Use less for paginated output
+                command_list.append("-R")
+            elif self.__Viewer == "cat":
+                # Use cat for plain output
+                command_list = []
+            try:
+                import subprocess
+                process = subprocess.Popen(
+                    command_list,
+                    stdin=subprocess.PIPE,
+                    text=True,
+                )
+                process.communicate(input=output)
+            except Exception as e:
+                print(f"Failed to open viewer '{self.__Viewer}': {e}")
+        else:
+            print(output)
+    
     # ----------------------------------
     # Visualize the todo lists and tasks
     # ----------------------------------
     def viewTodo(self) -> None:
-        print("# Todo")
-        self.__viewSection(self.__TodoLists)
+        output : str = "# Todo\n"
+        output += self.__outputSection(self.__TodoLists)
+        self.__viewOutput(output)
 
     def viewTodoList(self, list_name: str) -> None:
-        self.__viewList(self.__TodoLists, list_name)
+        output: str = self.__outputList(self.__TodoLists, list_name)
+        if output:
+            self.__viewOutput(output)
+        else:
+            print(f"No tasks found in the list '{list_name}'.") 
 
     def viewDone(self) -> None:
-        print("# Done")
-        self.__viewSection(self.__DoneLists)
+        output : str = "# Done\n"
+        output += self.__outputSection(self.__TodoLists)
+        self.__viewOutput(output)
 
     def viewDoneList(self, list_name: str) -> None:
-        self.__viewList(self.__DoneLists, list_name)
+        output: str = self.__outputList(self.__DoneLists, list_name)
+        if output:
+            self.__viewOutput(output)
+        else:
+            print(f"No tasks found in the done list '{list_name}'.")
 
     def viewAll(self) -> None:
-        self.viewTodo()
-        print("")
-        self.viewDone()
+        output : str = "# Todo\n"
+        output += self.__outputSection(self.__TodoLists)
+        output += "\n# Done\n"
+        output += self.__outputSection(self.__DoneLists)
+        self.__viewOutput(output)
 
 
 # ----------------------
