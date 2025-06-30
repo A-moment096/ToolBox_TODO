@@ -1,0 +1,3 @@
+editor = "vim"
+viewer = "batcat"
+file = "/mnt/c/Github/MyToolBox/TODO/TODO.md"
