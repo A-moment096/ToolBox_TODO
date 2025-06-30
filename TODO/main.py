@@ -1,6 +1,7 @@
-def main():
-    print("Hello from todo!")
+#!/usr/bin/env python3
+"""Main entry point for the modular todo manager."""
 
+from todo_manager import main
 
 if __name__ == "__main__":
     main()
