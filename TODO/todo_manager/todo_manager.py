@@ -21,7 +21,7 @@ class TodoManager:
         self.done_lists: Section = {}
         
         # Initialize managers
-        self.config_manager = ConfigManager(config_path) if config_path.exists() else None
+        self.config_manager = ConfigManager(config_path)
         self.file_manager = FileIOManager(todo_path)
         self.display_manager = DisplayManager()
         

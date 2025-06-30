@@ -1,3 +1,3 @@
-editor = "vim"
-file = "/mnt/c/Github/MyToolBox/TODO/TODO.md"
-viewer = "batcat"
+editor = "nvim"
+file = "."
+viewer = ""

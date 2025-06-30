@@ -15,6 +15,14 @@ class ConfigManager:
         self.viewer: str = ""
         self.editor: str = ""
         self.file_path: Optional[Path] = None
+
+        if config_path.exists():
+            self.load_config(Path(config_path))
+        else:
+            print(f"Config file not found at {self.config_path}, using defaults.")
+            self.viewer = ""
+            self.editor = "vim"
+            self.file_path = Path("")
         
     def load_config(self, default_file_path: Path) -> None:
         """Load configuration from the config file."""

@@ -144,7 +144,7 @@ def main():
         config_file_path = Path.home() / ".config/todo_config.json"
         
     # Initialize TodoManager
-    todo_manager = TodoManager(todo_file, config_path=config_file_path)
+    todo_manager = TodoManager(todo_file, config_file_path)
 
     # Handle different commands
     if not args.command:
