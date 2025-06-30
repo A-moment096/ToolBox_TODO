@@ -2,9 +2,6 @@
 from __future__ import annotations
 from pathlib import Path
 from typing import Dict, List, TypeAlias
-import re
-from rich import print as rprint
-from rich.style import Style
 import argparse
 import shutil
 import json, yaml, toml
@@ -12,6 +9,8 @@ import json, yaml, toml
 Section: TypeAlias = Dict[str, List[str]]
 
 def print(*args, **kwargs):
+    from rich import print as rprint
+    from rich.style import Style
     # Define your custom styles
     HEADING1_STYLE = Style(color="yellow", bold=True)
     HEADING2_STYLE = Style(color="green", bold=True)
@@ -98,6 +97,7 @@ class TodoManager:
                     list_name = l[3:].strip()
                     current_section[list_name] = []
                 else:
+                    import re
                     line_match = re.match(r"^\d+\.\s(.*)$", l.strip())
                     # plain text line will be treated as a task
                     task: str = line_match.group(1) if line_match else l
@@ -112,22 +112,20 @@ class TodoManager:
         with open(self.__ConfigPath, "r") as f:
             if config_type == ".json":
                 try:
-                    config_data = json.load(f)
+                    config_data: Dict = json.load(f)
                     self.__Viewer = config_data.get("viewer", "")
                     self.__Editor = config_data.get("editor", "")
                     self.__FilePath = Path(config_data.get("file", self.__FilePath))
                 except json.JSONDecodeError as e:
                     print(f"Error loading JSON config: {e}")
-                pass
             elif config_type == ".yml" or config_type == ".yaml":
                 try:
-                    config_data = yaml.safe_load(f)
+                    config_data: Dict = yaml.safe_load(f)
                     self.__Viewer = config_data.get("viewer", "")
                     self.__Editor = config_data.get("editor", "")
                     self.__FilePath = Path(config_data.get("file", self.__FilePath))
                 except yaml.YAMLError as e:
                     print(f"Error loading YAML config: {e}")
-                pass
             elif config_type == ".toml":
                 try:
                     config_data = toml.load(f)
@@ -136,32 +134,6 @@ class TodoManager:
                     self.__FilePath = Path(config_data.get("file", self.__FilePath))
                 except toml.TomlDecodeError as e:
                     print(f"Error loading TOML config: {e}")
-                pass
-            pass
-        pass
-    
-    # TODO Implementation needed
-    # def saveConfig(self)->None:
-    #     config_type = self.__ConfigPath.suffix
-    #     with open(self.__ConfigPath, "w") as f:
-    #         if config_type == ".json":
-    #             json.dump({
-    #                 "viewer": self.__Viewer,
-    #                 "editor": self.__Editor,
-    #                 "file": str(self.__FilePath)
-    #             }, f)
-    #         elif config_type == ".yml" or config_type == ".yaml":
-    #             yaml.dump({
-    #                 "viewer": self.__Viewer,
-    #                 "editor": self.__Editor,
-    #                 "file": str(self.__FilePath)
-    #             }, f)
-    #         elif config_type == ".toml":
-    #             toml.dump({
-    #                 "viewer": self.__Viewer,
-    #                 "editor": self.__Editor,
-    #                 "file": str(self.__FilePath)
-    #             }, f)
     
     def saveConfig(self, editor: str = "", file: str = "", viewer: str = "") -> None:
         """Save the current configuration to the config file."""
@@ -561,7 +533,7 @@ def main():
     
     config_file_path: Path
     if __debug__:
-        config_file_path = Path(__file__).resolve().parent / "config.json"
+        config_file_path = Path(__file__).resolve().parent / "config.toml"
     else:
         config_file_path = Path.home() / ".config/todo_config.json"
         
