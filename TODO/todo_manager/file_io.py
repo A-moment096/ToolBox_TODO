@@ -5,6 +5,9 @@ from pathlib import Path
 from typing import List
 from .types import Section
 
+TODO_SECTION = "Todo"
+DONE_SECTION = "Done"
+
 
 class FileIOManager:
     """Handles reading and writing markdown files for todo lists."""
@@ -34,9 +37,9 @@ class FileIOManager:
                 
             if line.startswith("# "):
                 section_name = line[2:].strip()
-                if section_name == "Todo":
+                if section_name == TODO_SECTION:
                     current_section = todo_lists
-                elif section_name == "Done":
+                elif section_name == DONE_SECTION:
                     current_section = done_lists
                 else:
                     print(f"Unknown section: {section_name}")

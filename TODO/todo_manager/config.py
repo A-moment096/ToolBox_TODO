@@ -47,7 +47,9 @@ class ConfigManager:
                 self.editor = config_data.get("editor", "")
                 file_str = config_data.get("file", str(default_file_path))
                 self.file_path = Path(file_str) if file_str else default_file_path
-                
+
+        except PermissionError as e:
+            print(f"Permission denied when accessing config file {self.config_path}: {e}")
         except json.JSONDecodeError as e:
             print(f"Error loading JSON config: {e}")
         except yaml.YAMLError as e:

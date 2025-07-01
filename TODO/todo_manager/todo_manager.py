@@ -3,7 +3,7 @@
 import shutil
 import subprocess
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 from .config import ConfigManager
 from .display import DisplayManager, select_option
@@ -14,20 +14,28 @@ from .types import Section
 class TodoManager:
     """Main class for managing todo lists and tasks."""
 
-    def __init__(self, todo_path: Path = Path(), config_path: Path = Path(), viewer: str = "") -> None:
+    def __init__(
+        self,
+        todo_path: Path,
+        config_path: Path = Path(),
+        config_manager: Optional[ConfigManager] = None,
+        file_manager: Optional[FileIOManager] = None,
+        display_manager: Optional[DisplayManager] = None,
+        viewer: str = "",
+    ) -> None:
         self.file_path = todo_path
         self.config_path = config_path
         self.todo_lists: Section = {}
         self.done_lists: Section = {}
 
-        # Initialize managers
-        self.config_manager = ConfigManager(config_path)
-        self.file_manager = FileIOManager(todo_path)
-        self.display_manager = DisplayManager()
+        # Use dependency injection or create defaults
+        self.config_manager = config_manager or ConfigManager(config_path)
+        self.file_manager = file_manager or FileIOManager(todo_path)
+        self.display_manager = display_manager or DisplayManager()
 
         # Load configuration first
         if self.config_manager:
-            self.config_manager.load_config(todo_path)
+            self.config_manager.load_config(config_path)
             self.display_manager.set_viewer(self.config_manager.get_viewer())
 
         # Set the viewer for display manager if explicitly provided
@@ -147,11 +155,11 @@ class TodoManager:
 
         tasks = self.todo_lists[validated_list_name]
 
-        if not (1 <= old_position <= len(tasks)):
+        if not self._validate_task_number(old_position, len(tasks)):
             print(f"Invalid task number {old_position} in list {validated_list_name}.")
             return
 
-        if not (1 <= new_position <= len(tasks)):
+        if not self._validate_task_number(new_position, len(tasks)):
             print(
                 f"Invalid new task number {new_position} in list {validated_list_name}."
             )
@@ -272,3 +280,11 @@ class TodoManager:
             return list_name in self.done_lists
         else:
             return list_name in self.todo_lists or list_name in self.done_lists
+
+    def _validate_task_number(self, task_number: int, list_size: int) -> bool:
+        """Validate task number is within valid range."""
+        return 1 <= task_number <= list_size
+
+    def _validate_list_name(self, list_name: str) -> bool:
+        """Validate list name is not empty and doesn't contain invalid characters."""
+        return bool(list_name.strip()) and not any(char in list_name for char in ['#', '\n', '\r'])
