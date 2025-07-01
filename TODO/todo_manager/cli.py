@@ -6,7 +6,7 @@ from pathlib import Path
 from .todo_manager import TodoManager
 
 
-def create_parser()->argparse.ArgumentParser:
+def create_parser() -> argparse.ArgumentParser:
     """Create and configure the argument parser for the CLI."""
     parser = argparse.ArgumentParser(
         description="A command-line todo list manager",
@@ -43,10 +43,10 @@ Examples:
     parser.add_argument(
         "--viewer",
         "-v",
-        type=str, 
+        type=str,
         help="Choose viewer for output this time (e.g., 'less', 'more')",
     )
-    parser .add_argument(
+    parser.add_argument(
         "--config",
         "-c",
         type=Path,
@@ -62,7 +62,9 @@ Examples:
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
     # View command
-    view_parser = subparsers.add_parser("view",aliases=["v"], help="View todo lists and tasks")
+    view_parser = subparsers.add_parser(
+        "view", aliases=["v"], help="View todo lists and tasks"
+    )
     view_group = view_parser.add_mutually_exclusive_group()
     view_group.add_argument(
         "--todo", "-t", action="store_true", help="Show only todo items"
@@ -73,16 +75,22 @@ Examples:
     view_group.add_argument("--list", "-l", help="Show specific list")
 
     # Add task command
-    add_parser = subparsers.add_parser("add",aliases=["a"], help="Add a new task to a list")
+    add_parser = subparsers.add_parser(
+        "add", aliases=["a"], help="Add a new task to a list"
+    )
     add_parser.add_argument("list_name", help="Name of the list")
     add_parser.add_argument("task", help="Task description")
 
     # Add list command
-    add_list_parser = subparsers.add_parser("add-list", aliases=["al"], help="Add a new list")
+    add_list_parser = subparsers.add_parser(
+        "add-list", aliases=["al"], help="Add a new list"
+    )
     add_list_parser.add_argument("list_name", help="Name of the new list")
 
     # Done task command
-    done_parser = subparsers.add_parser("done", aliases=["d"], help="Mark a task as done")
+    done_parser = subparsers.add_parser(
+        "done", aliases=["d"], help="Mark a task as done"
+    )
     done_parser.add_argument("list_name", help="Name of the list")
     done_parser.add_argument(
         "task_number", type=int, help="Task number to mark as done"
@@ -108,7 +116,9 @@ Examples:
     restore_list_parser.add_argument("list_name", help="Name of the list to restore")
 
     # Order/reorder task command
-    order_parser = subparsers.add_parser("order", aliases=["o"], help="Reorder tasks within a list")
+    order_parser = subparsers.add_parser(
+        "order", aliases=["o"], help="Reorder tasks within a list"
+    )
     order_parser.add_argument("list_name", help="Name of the list")
     order_parser.add_argument(
         "old_position", type=int, help="Current position of the task"
@@ -119,14 +129,16 @@ Examples:
 
     # Clear done command
     clear_parser = subparsers.add_parser(
-        "clear-done", aliases=["clear","c"], help="Clear all done tasks and lists"
+        "clear-done", aliases=["clear", "c"], help="Clear all done tasks and lists"
     )
     clear_parser.add_argument(
         "--force", "-f", action="store_true", help="Force clear without confirmation"
     )
 
     # Save command
-    save_parser = subparsers.add_parser("save", aliases=["s"], help="Save current state to file")
+    save_parser = subparsers.add_parser(
+        "save", aliases=["s"], help="Save current state to file"
+    )
 
     # Config command
     config_parser = subparsers.add_parser("config", help="Configure this tool")
@@ -148,9 +160,11 @@ Examples:
         type=str,
         help="Editor to use for editing the todo file",
     )
-    
+
     # Help command
-    help_parser = subparsers.add_parser("help", aliases=["h","?"], help="Show this help message")
+    help_parser = subparsers.add_parser(
+        "help", aliases=["h", "?"], help="Show this help message"
+    )
 
     return parser
 
@@ -160,36 +174,38 @@ def main():
     parser: argparse.ArgumentParser = create_parser()
     args: argparse.Namespace = parser.parse_args()
 
-    # Determine the todo file path
-    if args.file:
-        todo_file = args.file
-    elif args.debug or __debug__:
-        todo_file = Path(__file__).resolve().parent.parent / "TODO.md"
+    debug_mode: bool = args.debug or __debug__
+    todo_file_arg: Path = args.file
+    config_file_arg: Path = args.config
+    viewer: str = args.viewer
+    
+    # Determine configuration file path (allow .json, .yaml, .yml, .toml)
+    if config_file_arg:
+        config_file_path: Path = config_file_arg.expanduser().resolve()
     else:
-        todo_file = Path.home() / "TODO.md"
+        config_dir = Path(".") if debug_mode else Path.home() / ".config"
+        base_name = "todo_config"
+        extensions = [".toml", ".yaml", ".yml", ".json"]
+        for ext in extensions:
+            candidate = config_dir / f"{base_name}{ext}"
+            if candidate.exists():
+                config_file_path = candidate
+                break
+        else:
+            config_file_path = config_dir / f"{base_name}.toml"
 
-    # Determine config file path
-    if __debug__:
-        config_file_path = Path(__file__).resolve().parent.parent / "config.toml"
+    # Determine todo file path
+    if todo_file_arg:
+        todo_file_path: Path = todo_file_arg.expanduser().resolve()
     else:
-        config_file_path = Path.home() / ".config/todo_config.json"
+        if debug_mode:
+            todo_file_path = Path("./TODO.md")
+        else:
+            todo_file_path = Path.home() / "TODO.md"
 
     # Initialize TodoManager
-    todo_manager = TodoManager(todo_file, config_file_path)
+    todo_manager = TodoManager(todo_file_path, config_file_path, viewer)
 
-    # Handle global options 
-    
-    # Handle global options
-    # Prefer long option if both are present, otherwise use whichever is set
-    for opt, setter in [
-        (("viewer", "v"), todo_manager.set_viewer),
-        (("file", "f"), todo_manager.set_todo_path),
-        (("config", "c"), todo_manager.set_config_path),
-    ]:
-        value = getattr(args, opt[0], None) or getattr(args, opt[1], None)
-        if value:
-            setter(value)
-        
     # Handle different commands
     match args.command:
         case None:
@@ -229,7 +245,9 @@ def main():
             todo_manager.restore_list(args.list_name)
             todo_manager.write_file()
         case "order" | "o":
-            todo_manager.order_task(args.list_name, args.old_position, args.new_position)
+            todo_manager.order_task(
+                args.list_name, args.old_position, args.new_position
+            )
             todo_manager.write_file()
         case "clear-done" | "clear" | "c":
             force = getattr(args, "force", False)
