@@ -4,3 +4,6 @@ build
 dist
 *.spec
 *.egg-info
+
+*.md
+*demo*
