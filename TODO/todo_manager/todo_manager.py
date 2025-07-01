@@ -258,3 +258,24 @@ class TodoManager:
             return list_name in self.done_lists
         else:
             return list_name in self.todo_lists or list_name in self.done_lists
+
+    def set_config_path(self, config_path: Path) -> None:
+        """Set the config file path and reload config."""
+        self.config_path = config_path
+        self.config_manager = ConfigManager(config_path)
+        self.config_manager.load_config(self.file_path)
+        self.display_manager.set_viewer(self.config_manager.get_viewer())
+
+    def set_todo_path(self, todo_path: Path) -> None:
+        """Set the todo file path and reload file."""
+        self.file_path = todo_path
+        self.file_manager = FileIOManager(todo_path)
+        self._initialize_file()
+
+    def set_viewer(self, viewer: str) -> None:
+        """Set the viewer in config and update display manager."""
+        if self.config_manager:
+            self.config_manager.save_config(viewer=viewer)
+            self.display_manager.set_viewer(viewer)
+        else:
+            print("No config manager available")
