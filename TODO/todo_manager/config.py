@@ -27,7 +27,6 @@ class ConfigManager:
     def load_config(self, default_file_path: Path) -> None:
         """Load configuration from the config file."""
         if not self.config_path.exists():
-            print(f"Config file not found at {self.config_path}")
             return
             
         config_type = self.config_path.suffix

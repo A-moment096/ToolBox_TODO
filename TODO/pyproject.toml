@@ -1,12 +1,27 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "todo"
 version = "0.1.0"
 description = "Manage todo under home folder"
+authors = [
+    {name = "AMoment", email="amoment096@gmail.com"}
+]
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "pyinstaller>=6.14.1",
     "pyyaml>=6.0.2",
     "rich>=14.0.0",
     "toml>=0.10.2",
 ]
+license = "MIT"
+license-files = ["LICEN[CS]E*"]
+
+[project.urls]
+Homepage = "https://github.com/A-moment096/MyToolBox"
+Issues = "https://github.com/A-moment096/MyToolBox/issues"
+
+[project.scripts]
+todo = "todo_manager:main"
