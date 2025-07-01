@@ -4,6 +4,7 @@ import re
 from pathlib import Path
 from typing import List
 from .types import Section
+from .output import warning, success
 
 TODO_SECTION = "Todo"
 DONE_SECTION = "Done"
@@ -42,7 +43,7 @@ class FileIOManager:
                 elif section_name == DONE_SECTION:
                     current_section = done_lists
                 else:
-                    print(f"Unknown section: {section_name}")
+                    warning(f"Unknown section: {section_name}")
                     continue
                     
             elif line.startswith("## "):
@@ -55,7 +56,7 @@ class FileIOManager:
                 task: str = line_match.group(1) if line_match else line
                 
                 if list_name not in current_section:
-                    print(f"Warning: Task '{task}' found without a list.")
+                    warning(f"Warning: Task '{task}' found without a list.")
                     continue
                     
                 current_section[list_name].append(task)
@@ -89,7 +90,7 @@ class FileIOManager:
         self.file_path.parent.mkdir(parents=True, exist_ok=True)
         with open(self.file_path, "w", encoding="utf-8") as f:
             f.write("# Todo\n\n# Done\n")
-        print(f"Created new todo file at {self.file_path}")
+        success(f"Created new todo file at {self.file_path}")
     
     def file_exists(self) -> bool:
         """Check if the todo file exists."""

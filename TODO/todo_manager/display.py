@@ -2,46 +2,15 @@
 
 import subprocess
 from typing import List
-from rich import print as rprint
-from rich.style import Style
 from .types import Section
+from .output import display, error
 
 
-# Define custom styles
-HEADING1_STYLE = Style(color="yellow", bold=True)
-HEADING2_STYLE = Style(color="green", bold=True)
-NUMBERED_STYLE = Style(color="cyan")
-
-
-def print(*args, **kwargs):
-    """Custom print that styles #-lines and numbered lines using rich."""
-    original_sep = kwargs.get("sep", " ")
-    original_text: str = original_sep.join(str(arg) for arg in args)
-
-    lines = original_text.split("\n")
-    for line in lines:
-        if line.startswith("# "):
-            rprint(f"[{HEADING1_STYLE}]{line}[/]")
-        elif line.startswith("## "):
-            rprint(f"[{HEADING2_STYLE}]{line}[/]")
-        elif line and line[0].isdigit():  # Check if first char is a digit
-            rprint(f"[{NUMBERED_STYLE}]{line}[/]")
-        else:
-            rprint(line)  # Fallback to plain print
-
-
-def select_option(prompt: str, default: bool = True) -> bool:
-    """Prompt the user for a yes/no answer."""
-    while True:
-        response = input(f"{prompt} [{'Y/n' if default else 'y/N'}]: ").strip().lower()
-        if response == '':
-            return default
-        elif response in ('y', 'yes'):
-            return True
-        elif response in ('n', 'no'):
-            return False
-        else:
-            print("Invalid input, please enter 'y' or 'n'.")
+# For backward compatibility, maintain the select_option function
+def select_option(message: str, default: bool = True) -> bool:
+    """Prompt the user for a yes/no answer.""" 
+    from .output import prompt
+    return prompt(message, default)
 
 
 class DisplayManager:
@@ -74,7 +43,7 @@ class DisplayManager:
         if self.viewer:
             self._display_with_viewer(output)
         else:
-            print(output)
+            display(output)
     
     def _display_with_viewer(self, output: str) -> None:
         """Display output using the configured viewer."""
@@ -96,9 +65,9 @@ class DisplayManager:
             )
             process.communicate(input=output)
         except Exception as e:
-            print(f"Failed to open viewer '{self.viewer}': {e}")
+            error(f"Failed to open viewer '{self.viewer}': {e}")
             # Fallback to console output
-            print(output)
+            display(output)
     
     def display_todo_section(self, todo_lists: Section) -> None:
         """Display the todo section."""
@@ -131,7 +100,7 @@ class DisplayManager:
         if list_name in section:
             self.display_output(output)
         else:
-            print(f"No tasks found in the list '{list_name}'.")
+            error(f"No tasks found in the list '{list_name}'.")
     
     def set_viewer(self, viewer: str) -> None:
         """Set the viewer for output display."""

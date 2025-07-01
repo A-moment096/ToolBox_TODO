@@ -4,6 +4,7 @@ import argparse
 from pathlib import Path
 
 from .todo_manager import TodoManager
+from .output import error, success
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -204,7 +205,7 @@ def main():
             todo_file_path = Path.home() / "TODO.md"
 
     # Initialize TodoManager
-    todo_manager = TodoManager(todo_file_path, config_file_path, viewer)
+    todo_manager = TodoManager(todo_file_path, config_file_path, viewer=viewer or "")
 
     # Handle different commands
     match args.command:
@@ -222,7 +223,7 @@ def main():
                 elif todo_manager.has_list(args.list, "done"):
                     todo_manager.view_done_list(args.list)
                 else:
-                    print(f"List '{args.list}' not found")
+                    error(f"List '{args.list}' not found")
                     return
             else:
                 todo_manager.view_all()
@@ -259,7 +260,7 @@ def main():
             return
         case "save" | "s":
             todo_manager.write_file()
-            print("Todo file saved.")
+            success("Todo file saved.")
         case "config":
             editor = getattr(args, "editor", "")
             file_path = getattr(args, "file", "")

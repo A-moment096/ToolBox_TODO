@@ -5,6 +5,7 @@ import toml
 import yaml
 from pathlib import Path
 from typing import Dict, Optional
+from .output import warning, success, error
 
 
 class ConfigManager:
@@ -19,7 +20,7 @@ class ConfigManager:
         if config_path.exists():
             self.load_config(Path(config_path))
         else:
-            print(f"Config file not found at {self.config_path}, using defaults.")
+            warning(f"Config file not found at '{self.config_path.absolute()}', using defaults.")
             self.viewer = ""
             self.editor = "vim"
             self.file_path = Path("")
@@ -40,7 +41,7 @@ class ConfigManager:
                 elif config_type == ".toml":
                     config_data = toml.load(f)
                 else:
-                    print(f"Unsupported config file type: {config_type}")
+                    error(f"Unsupported config file type: {config_type}")
                     return
                     
                 self.viewer = config_data.get("viewer", "")
@@ -49,15 +50,15 @@ class ConfigManager:
                 self.file_path = Path(file_str) if file_str else default_file_path
 
         except PermissionError as e:
-            print(f"Permission denied when accessing config file {self.config_path}: {e}")
+            error(f"Permission denied when accessing config file {self.config_path}: {e}")
         except json.JSONDecodeError as e:
-            print(f"Error loading JSON config: {e}")
+            error(f"Error loading JSON config: {e}")
         except yaml.YAMLError as e:
-            print(f"Error loading YAML config: {e}")
+            error(f"Error loading YAML config: {e}")
         except toml.TomlDecodeError as e:
-            print(f"Error loading TOML config: {e}")
+            error(f"Error loading TOML config: {e}")
         except Exception as e:
-            print(f"Error loading config: {e}")
+            error(f"Error loading config: {e}")
     
     def save_config(self, editor: str = "", file: str = "", viewer: str = "") -> None:
         """Save the current configuration to the config file."""
@@ -89,13 +90,13 @@ class ConfigManager:
                 elif config_type == ".toml":
                     toml.dump(config_data, f)
                 else:
-                    print(f"Unsupported config file type: {config_type}")
+                    error(f"Unsupported config file type: {config_type}")
                     return
                     
-            print(f"Configuration saved to {self.config_path}")
+            success(f"Configuration saved to {self.config_path}")
             
         except Exception as e:
-            print(f"Error saving config: {e}")
+            error(f"Error saving config: {e}")
     
     def get_file_path(self, default: Path) -> Path:
         """Get the configured file path or return default."""
