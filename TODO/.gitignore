@@ -1,9 +1,10 @@
+# General ignore rules
 **/__pycache__
 .vscode
 build
 dist
 *.spec
 *.egg-info
-
+# Specific files
 *.md
 *demo*
