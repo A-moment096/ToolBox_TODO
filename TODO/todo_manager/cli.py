@@ -175,7 +175,7 @@ def main():
     parser: argparse.ArgumentParser = create_parser()
     args: argparse.Namespace = parser.parse_args()
 
-    debug_mode: bool = args.debug or __debug__
+    debug_mode: bool = args.debug
     todo_file_arg: Path = args.file
     config_file_arg: Path = args.config
     viewer: str = args.viewer
