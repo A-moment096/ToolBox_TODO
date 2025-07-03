@@ -10,4 +10,4 @@ TODO.md
 todo_config*
 *demo*
 # For setuptools_scm
-todo_manager/_version.py
+todo_cli/_version.py

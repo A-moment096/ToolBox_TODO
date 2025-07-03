@@ -5,15 +5,8 @@ from .config import ConfigManager
 from .file_io import FileIOManager
 from .display import DisplayManager
 from .output import OutputManager
-from .cli import create_parser, main
-from importlib.metadata import version, PackageNotFoundError
+from .cli import create_parser, main, get_version
 
-def get_version():
-    """Get the version of the todo_manager package."""
-    try:
-        return version("todo_manager")
-    except PackageNotFoundError:
-        return "unknown"
 __version__ = get_version()
 
 __all__ = [
