@@ -269,7 +269,9 @@ def main():
         case "help" | "h" | "?":
             parser.print_help()
             return
-
+        case "version" | "v" | "-V"| "--version":
+            todo_manager.self_intro()
+            return
 
 if __name__ == "__main__":
     main()
