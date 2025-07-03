@@ -201,7 +201,7 @@ class TodoManager:
             error(f"No such list named as {list_name}.")
             return False
 
-        target[list_name] = source.pop(list_name)
+        target[list_name] += source.pop(list_name)
         return True
 
     def done_task(self, list_name: str, task_number: int) -> None:
