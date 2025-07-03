@@ -1,1 +1,13 @@
+# General ignore rules
+**/__pycache__
 .vscode
+build
+dist
+*.spec
+*.egg-info
+# Specific files
+TODO.md
+todo_config*
+*demo*
+# For setuptools_scm
+todo_manager/_version.py
