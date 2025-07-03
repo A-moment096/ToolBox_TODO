@@ -6,8 +6,16 @@ from .file_io import FileIOManager
 from .display import DisplayManager
 from .output import OutputManager
 from .cli import create_parser, main
+from importlib.metadata import version, PackageNotFoundError
 
-__version__ = "0.1.0"
+def get_version():
+    """Get the version of the todo_manager package."""
+    try:
+        return version("todo_manager")
+    except PackageNotFoundError:
+        return "unknown"
+__version__ = get_version()
+
 __all__ = [
     "TodoManager",
     "ConfigManager", 
@@ -15,5 +23,5 @@ __all__ = [
     "DisplayManager",
     "OutputManager",
     "create_parser",
-    "main"
+    "main",
 ]

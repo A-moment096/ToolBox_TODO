@@ -2,10 +2,12 @@
 
 import argparse
 from pathlib import Path
+from rich import print as rich_print
 
 from .todo_manager import TodoManager
 from .output import error, success
 
+from todo_manager import get_version
 
 def create_parser() -> argparse.ArgumentParser:
     """Create and configure the argument parser for the CLI."""
@@ -55,8 +57,15 @@ Examples:
     )
     parser.add_argument(
         "--debug",
+        "-d",
         action="store_true",
         help="Use current directory for todo file instead of home directory",
+    )
+    parser.add_argument(
+        "--version",
+        "-V",
+        action="store_true",
+        help="Print the version of the todo manager",
     )
 
     # Create subparsers for different commands
@@ -169,6 +178,16 @@ Examples:
 
     return parser
 
+def self_intro() -> None:
+    """Check the version of the Todo Manager."""
+
+    version = get_version()    
+    
+    rich_print(
+f"""Todo Manager version {version}
+This is a subproject of ToolBox, a collection of useful tools.
+Author: AMoment
+Homepage: https://github.com/A-moment096/MyToolBox""")
 
 def main():
     """Main entry point for the CLI application."""
@@ -179,6 +198,11 @@ def main():
     todo_file_arg: Path = args.file
     config_file_arg: Path = args.config
     viewer: str = args.viewer
+    version_flag: bool = args.version
+    
+    if version_flag:
+        self_intro()
+        return
     
     # Determine configuration file path (allow .json, .yaml, .yml, .toml)
     if config_file_arg:
@@ -268,9 +292,6 @@ def main():
             todo_manager.save_config(editor, file_path, viewer)
         case "help" | "h" | "?":
             parser.print_help()
-            return
-        case "version" | "v" | "-V"| "--version":
-            todo_manager.self_intro()
             return
 
 if __name__ == "__main__":
