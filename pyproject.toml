@@ -19,12 +19,12 @@ license = "MIT"
 license-files = ["LICEN[CS]E*"]
 dynamic = ["version"]
 
-[tool.setuptools_scm]
-write_to = "todo_manager/_version.py"
-
 [project.urls]
 Homepage = "https://github.com/A-moment096/MyToolBox"
 Issues = "https://github.com/A-moment096/MyToolBox/issues"
 
 [project.scripts]
 todo = "todo_manager:main"
+
+[tool.setuptools_scm]
+write_to = "todo_manager/_version.py"

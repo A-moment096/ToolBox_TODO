@@ -64,8 +64,9 @@ Examples:
     parser.add_argument(
         "--version",
         "-V",
-        action="store_true",
-        help="Print the version of the todo manager",
+        action="version",
+        version=f"%(prog)s {get_version()}",
+        help="Show the version of the Todo Manager",
     )
 
     # Create subparsers for different commands
