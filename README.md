@@ -19,6 +19,7 @@ However, as this tool is *too simple* to be uploaded to PyPI, and there are **SO
 
 ### Basic Commands
 
+> [!TIP]
 > Information below is also shipped with help information. All these commands supports short form. 
 
 ```bash
