@@ -12,7 +12,8 @@ You can easily install this tool using `pipx` or `uv tool`. But of course, you c
 
 However, as this tool is *too simple* to be uploaded to PyPI, and there are **SO MANY** packages for "todo-like" things already, if you want to try it, please download it from release and install it manually (still, should be really simple). After installation, you will see it appears as a module named as `todo-cli`, which provides command named as `todo`.
 
-> [!WARNING] if you install use command like `uv install todo-cli`, you won't install this tool but a really old tool from PyPI. Currently I don't have a plan to publish this in PyPI and a good name for this tool. So please, download it from github and install it with specified file.
+> [!WARNING]
+> if you install use command like `uv install todo-cli`, you won't install this tool but a really old tool from PyPI. Currently I don't have a plan to publish this in PyPI and a good name for this tool. So please, download it from github and install it with specified file.
 
 ## 📋 Usage
 
