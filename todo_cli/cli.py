@@ -2,24 +2,16 @@
 
 import argparse
 from pathlib import Path
-from rich import print as rich_print
-from importlib.metadata import version, PackageNotFoundError
+from rich_argparse import RawTextRichHelpFormatter
 
 from .todo_manager import TodoManager
-from .output import error, success
-
-def get_version():
-    """Get the version of the todo_cli package."""
-    try:
-        return version("todo_cli")
-    except PackageNotFoundError:
-        return "unknown"
+from .output import error, success, version
 
 def create_parser() -> argparse.ArgumentParser:
     """Create and configure the argument parser for the CLI."""
     parser = argparse.ArgumentParser(
         description="A command-line todo list manager",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
+        formatter_class=RawTextRichHelpFormatter,
         epilog="""
 Examples:
   %(prog)s view                           # View all todo and done items
@@ -184,14 +176,6 @@ Examples:
 
     return parser
 
-def self_intro() -> None:
-    """Check the version of the Todo Manager."""
-    rich_print(
-f"""Todo Manager version {get_version()}
-This is a subproject of ToolBox, a collection of useful tools.
-Author: AMoment
-Homepage: https://github.com/A-moment096/ToolBox""")
-
 def main():
     """Main entry point for the CLI application."""
     parser: argparse.ArgumentParser = create_parser()
@@ -205,7 +189,7 @@ def main():
     
     # Check if version flag is set
     if version_flag:
-        self_intro()
+        version()
         return
     
     # Determine configuration file path (allow .json, .yaml, .yml, .toml)

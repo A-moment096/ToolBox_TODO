@@ -3,10 +3,12 @@
 import re
 import sys
 from enum import Enum
-from typing import Any, TextIO
+from typing import TextIO
 from rich.console import Console
 from rich.style import Style
 from rich.text import Text
+from rich import print as rich_print
+from . import __version__
 
 
 class OutputType(Enum):
@@ -186,3 +188,12 @@ def display(content: str) -> None:
 def prompt(message: str, default: bool = True) -> bool:
     """Prompt the user for a yes/no answer."""
     return output_manager.prompt(message, default)
+
+def version() -> None:
+    """Check the version of the Todo Manager."""
+    rich_print(
+f"""Todo Manager version {__version__}
+This is a subproject of ToolBox, a collection of useful tools.
+Author: AMoment
+Homepage: https://github.com/A-moment096/ToolBox""")
+

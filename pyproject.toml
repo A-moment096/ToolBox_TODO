@@ -10,6 +10,7 @@ requires-python = ">=3.13"
 dependencies = [
     "pyyaml>=6.0.2",
     "rich>=14.0.0",
+    "rich-argparse>=1.7.1",
     "toml>=0.10.2",
 ]
 license = "MIT"
@@ -20,7 +21,7 @@ Homepage = "https://github.com/A-moment096/ToolBox_TODO"
 Issues = "https://github.com/A-moment096/ToolBox_TODO/issues"
 
 [project.scripts]
-todo = "todo_cli:main"
+todo = "todo_cli.cli:main"
 
 [build-system]
 requires = ["setuptools","setuptools_scm>=8"]

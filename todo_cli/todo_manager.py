@@ -4,8 +4,6 @@ import shutil
 import subprocess
 from pathlib import Path
 from typing import List, Optional
-from toml import load as toml_load
-from rich import print as rich_print
 
 from .config import ConfigManager
 from .display import DisplayManager, select_option
@@ -294,19 +292,3 @@ class TodoManager:
     def _validate_list_name(self, list_name: str) -> bool:
         """Validate list name is not empty and doesn't contain invalid characters."""
         return bool(list_name.strip()) and not any(char in list_name for char in ['#', '\n', '\r'])
-
-    def self_intro(self) -> None:
-        """Check the version of the Todo Manager."""
-        try:
-            with open(self.config_path, 'r') as f:
-                config_data = toml_load(f)
-                version = config_data.get('project', {}).get('version', 'unknown')
-                author = config_data.get('project', {}).get('authors', [{}])[0].get('name', 'unknown')
-                homepage = config_data.get('project', {}).get('urls').get('Homepage', 'unknown')
-                rich_print(
-f"""Todo Manager version {version}
-This is a subproject of ToolBox, a collection of useful tools.
-Author: {author}
-Homepage: {homepage}""")
-        except FileNotFoundError:
-            error(f"Config file not found at {self.config_path}.")

@@ -63,11 +63,24 @@ wheels = [
 ]
 
 [[package]]
+name = "rich-argparse"
+version = "1.7.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "rich" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/71/a6/34460d81e5534f6d2fc8e8d91ff99a5835fdca53578eac89e4f37b3a7c6d/rich_argparse-1.7.1.tar.gz", hash = "sha256:d7a493cde94043e41ea68fb43a74405fa178de981bf7b800f7a3bd02ac5c27be", size = 38094, upload-time = "2025-05-25T20:20:35.335Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/31/f6/5fc0574af5379606ffd57a4b68ed88f9b415eb222047fe023aefcc00a648/rich_argparse-1.7.1-py3-none-any.whl", hash = "sha256:a8650b42e4a4ff72127837632fba6b7da40784842f08d7395eb67a9cbd7b4bf9", size = 25357, upload-time = "2025-05-25T20:20:33.793Z" },
+]
+
+[[package]]
 name = "todo-cli"
 source = { editable = "." }
 dependencies = [
     { name = "pyyaml" },
     { name = "rich" },
+    { name = "rich-argparse" },
     { name = "toml" },
 ]
 
@@ -75,6 +88,7 @@ dependencies = [
 requires-dist = [
     { name = "pyyaml", specifier = ">=6.0.2" },
     { name = "rich", specifier = ">=14.0.0" },
+    { name = "rich-argparse", specifier = ">=1.7.1" },
     { name = "toml", specifier = ">=0.10.2" },
 ]
 
