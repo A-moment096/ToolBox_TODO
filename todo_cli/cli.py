@@ -190,7 +190,7 @@ def self_intro() -> None:
 f"""Todo Manager version {get_version()}
 This is a subproject of ToolBox, a collection of useful tools.
 Author: AMoment
-Homepage: https://github.com/A-moment096/MyToolBox""")
+Homepage: https://github.com/A-moment096/ToolBox""")
 
 def main():
     """Main entry point for the CLI application."""
