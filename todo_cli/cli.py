@@ -9,9 +9,10 @@ from .output import error, success, version
 
 def create_parser() -> argparse.ArgumentParser:
     """Create and configure the argument parser for the CLI."""
+    formatter = RawTextRichHelpFormatter
     parser = argparse.ArgumentParser(
         description="A command-line todo list manager",
-        formatter_class=RawTextRichHelpFormatter,
+        formatter_class=formatter,
         epilog="""
 Examples:
   %(prog)s view                           # View all todo and done items
@@ -69,8 +70,13 @@ Examples:
     # Create subparsers for different commands
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
+    # Helper to always use the formatter for subparsers
+    def add_parser_with_formatter(*args, **kwargs):
+        kwargs.setdefault("formatter_class", formatter)
+        return subparsers.add_parser(*args, **kwargs)
+
     # View command
-    view_parser = subparsers.add_parser(
+    view_parser = add_parser_with_formatter(
         "view", aliases=["v"], help="View todo lists and tasks"
     )
     view_group = view_parser.add_mutually_exclusive_group()
@@ -83,20 +89,20 @@ Examples:
     view_group.add_argument("--list", "-l", help="Show specific list")
 
     # Add task command
-    add_parser = subparsers.add_parser(
+    add_parser = add_parser_with_formatter(
         "add", aliases=["a"], help="Add a new task to a list"
     )
     add_parser.add_argument("list_name", help="Name of the list")
     add_parser.add_argument("task", help="Task description")
 
     # Add list command
-    add_list_parser = subparsers.add_parser(
+    add_list_parser = add_parser_with_formatter(
         "add-list", aliases=["al"], help="Add a new list"
     )
     add_list_parser.add_argument("list_name", help="Name of the new list")
 
     # Done task command
-    done_parser = subparsers.add_parser(
+    done_parser = add_parser_with_formatter(
         "done", aliases=["d"], help="Mark a task as done"
     )
     done_parser.add_argument("list_name", help="Name of the list")
@@ -105,26 +111,26 @@ Examples:
     )
 
     # Done list command
-    done_list_parser = subparsers.add_parser(
+    done_list_parser = add_parser_with_formatter(
         "done-list", aliases=["dl"], help="Mark entire list as done"
     )
     done_list_parser.add_argument("list_name", help="Name of the list to mark as done")
 
     # Restore task command
-    restore_parser = subparsers.add_parser(
+    restore_parser = add_parser_with_formatter(
         "restore", aliases=["r"], help="Restore a done task back to todo"
     )
     restore_parser.add_argument("list_name", help="Name of the list")
     restore_parser.add_argument("task_number", type=int, help="Task number to restore")
 
     # Restore list command
-    restore_list_parser = subparsers.add_parser(
+    restore_list_parser = add_parser_with_formatter(
         "restore-list", aliases=["rl"], help="Restore entire done list back to todo"
     )
     restore_list_parser.add_argument("list_name", help="Name of the list to restore")
 
     # Order/reorder task command
-    order_parser = subparsers.add_parser(
+    order_parser = add_parser_with_formatter(
         "order", aliases=["o"], help="Reorder tasks within a list"
     )
     order_parser.add_argument("list_name", help="Name of the list")
@@ -136,7 +142,7 @@ Examples:
     )
 
     # Clear done command
-    clear_parser = subparsers.add_parser(
+    clear_parser = add_parser_with_formatter(
         "clear-done", aliases=["clear", "c"], help="Clear all done tasks and lists"
     )
     clear_parser.add_argument(
@@ -144,12 +150,12 @@ Examples:
     )
 
     # Save command
-    save_parser = subparsers.add_parser(
+    save_parser = add_parser_with_formatter(
         "save", aliases=["s"], help="Save current state to file"
     )
 
     # Config command
-    config_parser = subparsers.add_parser("config", help="Configure this tool")
+    config_parser = add_parser_with_formatter("config", help="Configure this tool")
     config_parser.add_argument("--editor", "-e", type=str, help="Set default editor")
     config_parser.add_argument(
         "--file", "-f", type=str, help="Set default path of 'TODO.md'"
@@ -159,7 +165,7 @@ Examples:
     )
 
     # Edit command
-    edit_parser = subparsers.add_parser(
+    edit_parser = add_parser_with_formatter(
         "edit", aliases=["e"], help="Edit the todo file with the configured editor"
     )
     edit_parser.add_argument(
@@ -170,7 +176,7 @@ Examples:
     )
 
     # Help command
-    help_parser = subparsers.add_parser(
+    help_parser = add_parser_with_formatter(
         "help", aliases=["h", "?"], help="Show this help message"
     )
 
